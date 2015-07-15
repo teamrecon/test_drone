@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+import roslib
+roslib.load_manifest('test_drone')
+import numpy as np
+import rospy
+import sys
+import serial
+from std_msgs.msg import String
+from common import clock, draw_str
+
+port = "dev/ttyS0"
+baud = 115200
+
+ser = serial.Serial()
+ser.port = port
+ser.baudrate = baud
+
+class collision_avoidance():
+
+
+   def __init__(self):
+      rospy.init_node('collision_avoidance')
+      self.pub = rospy.Publisher('direction', String, queue_size=10)
+     
+  
+######################################################################################
+
+   def callback(self, data):
+      data_raw = ser.readline()
+      data_list = data_raw.split(',')
+      if data_list[0] = 1911:
+         left = data_list[1]
+         right = data_list[2]
+         front = data_list[3]
+         back = data_list[4]
+##############################################################################################3
+
+
+
+
+################################################################################################
+
+
+ 
+
+
+
+################################################################################################
+
+def main(args):
+   ca=collision_avoidance()
+   try:
+      rospy.spin()
+   except KeyboardInterrupt:
+      print "Shutting Down Collision Avoidance..."
+   cv.DestroyAllWindows()
+
+
+if __name__ == '__main__':
+    import sys, getopt
+    main(sys.argv)
+    
+    
+

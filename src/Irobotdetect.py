@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+import roslib
+roslib.load_manifest('test_drone')
+import numpy as np
+import cv2
+import cv2.cv as cv
+import rospy
+import ardrone_autonomy
+from std_msgs.msg import String
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Vector3
+from cv_bridge import CvBridge, CVBridgeError
+from video import create_capture
+from common import clock, draw_str
+
+class irobot_detect:
+
+
+   def __init__(self):
+      rospy.init_node('irobot_detect')
+      self.pub = rospy.Publisher('irobot_location', Vector3, queue_size=10)
+      cv.NamedWindow("Irobot_Detector",0)
+      self.bridge = CvBridge()
+      self.image_sub = rospy.Subsciber("ardrone/bottom/image_raw",Image,self.callback)
+      cascade = cv2.CascadeClassifier("irobot_hog_detect.xml")
+#########################################################################################
+
+   def convert_image(self, ros_img):
+      try:
+         cv_img = self.bridge.imgmsg_to_cv(ros_img,"bgr8")
+         return cv_img
+      except CvBridgeError, e:
+         print e
+######################################################################################
+
+   def callback(self, data):
+      cv_img=self.convert_image(data)
+      #cascade = cv2.CascadeClassifier("irobot_hog_detect.xml")
+      gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+      gray = cv2.equalizeHist(gray)
+      t = clock()
+      rects = detect(gray, cascade)
+      vis = cv_img.copy()
+      draw_rects(vis, rects, (0, 255, 0))
+      dt = clock() - t
+      draw_str(vis, (20, 20), 'time: %.1f ms' % (dt*1000))
+      cv2.imshow('Irobot_Detector', vis)
+
+
+##############################################################################################3
+
+   def detect(img, cascade):
+       rects = cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=4, minSize=(30, 30), flags = cv.CV_HAAR_SCALE_IMAGE)
+       if len(rects) == 0:
+           return []
+       rects[:,2:] += rects[:,:2]
+       return rects
+
+
+################################################################################################
+
+
+   def draw_rects(img, rects, color):
+       for x1, y1, x2, y2 in rects:
+           cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+           pub.publish(Vector((x1+x2)/2,(y1+y2)/2,117))
+
+
+
+################################################################################################
+
+def main(args):
+   ID=irobot_detect()
+   try:
+      rospy.spin()
+   except KeyboardInterrupt:
+      print "Shutting Down Irobot Detector..."
+   cv.DestroyAllWindows()
+
+
+if __name__ == '__main__':
+    import sys, getopt
+    main(sys.argv)
+    
+    
+
